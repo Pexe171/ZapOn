@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 Multizap Flow 4.4.0
 
 https://portaldozap.com.br
@@ -71,3 +72,6 @@ pm2 delete empresa01-backend empresa01-frontend
 pm2 start ecosystem.config.js
 
 pm2 save
+=======
+# ZapOn
+>>>>>>> fc3a231ccdf36de5c1e847248e522008f60b2d01
