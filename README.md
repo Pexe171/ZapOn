@@ -155,5 +155,5 @@ O fluxo oficial agora é **somente Docker Compose**.
 
 ## Observação sobre dependências do frontend
 
-O frontend possui um arquivo `Multizap/frontend/.npmrc` com `legacy-peer-deps=true` para evitar falhas de resolução de _peer dependencies_ durante o `npm ci` no build Docker.
+O frontend possui um arquivo `Multizap/frontend/.npmrc` com `legacy-peer-deps=true` e o `Multizap/frontend/Dockerfile` também executa `npm ci --legacy-peer-deps` para evitar falhas de resolução de _peer dependencies_ durante o build Docker em ambientes diferentes (local/CI).
 
