@@ -6,7 +6,7 @@ ARG REACT_APP_BACKEND_URL=http://localhost:8080
 ENV REACT_APP_BACKEND_URL=${REACT_APP_BACKEND_URL}
 
 COPY package*.json ./
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 
 COPY . .
 RUN npm run build
