@@ -51,3 +51,8 @@ Use apenas o fluxo com Docker Compose descrito neste documento e no README da ra
 
 O frontend possui um arquivo `Multizap/frontend/.npmrc` com `legacy-peer-deps=true` e o `Multizap/frontend/Dockerfile` também executa `npm ci --legacy-peer-deps` para evitar falhas de resolução de _peer dependencies_ durante o build Docker em ambientes diferentes (local/CI).
 
+
+
+## Compatibilidade de Node.js
+
+O backend utiliza a dependência `baileys`, que exige **Node.js 20+** durante o `npm ci`. Por isso, a imagem base do backend no Dockerfile foi definida como `node:20-bookworm-slim`.
