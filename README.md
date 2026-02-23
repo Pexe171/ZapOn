@@ -6,13 +6,17 @@ Este repositório foi organizado para rodar o projeto **ZapOn (Multizap)** com *
 
 - Container do **PostgreSQL**.
 - Container do **Redis**.
-- Container do **backend** (Node.js + build TypeScript + migrations automáticas).
+- Container do **backend** (Node.js 20 + build TypeScript + migrations automáticas).
 - Container do **frontend** (build React + Nginx).
 
 ## Pré-requisitos
 
 - Docker 24+
 - Docker Compose (plugin `docker compose`)
+
+## Compatibilidade de Node.js
+
+O backend depende do pacote `baileys`, que exige **Node.js 20+** em tempo de instalação. Por isso, o `Multizap/backend/Dockerfile` usa a imagem `node:20-bookworm-slim`.
 
 ## Subindo o ambiente
 
