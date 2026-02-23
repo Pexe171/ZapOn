@@ -15,16 +15,34 @@ const parseArgs = () => {
   return parsed;
 };
 
+const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+
 const showHelp = () => {
   console.log(`\nUso:\n  npm run create:user -- --name="Nome" --email="email@dominio.com" --password="SenhaForte123" [--companyId=1] [--profile=admin]\n\nExemplo:\n  npm run create:user -- --name="Administrador" --email="admin@empresa.com" --password="123456" --companyId=1 --profile=admin\n`);
 };
 
 const buildSequelize = () => {
   const dialect = process.env.DB_DIALECT || "postgres";
+  const database = process.env.DB_NAME;
+  const username = process.env.DB_USER;
+  const rawPassword = process.env.DB_PASS ?? process.env.DB_PASSWORD;
+
+  if (!database || !username) {
+    throw new Error(
+      "Configuração de banco inválida: defina DB_NAME e DB_USER no arquivo .env."
+    );
+  }
+
+  if (typeof rawPassword !== "string") {
+    throw new Error(
+      "Configuração de banco inválida: defina DB_PASS (ou DB_PASSWORD) como texto no arquivo .env."
+    );
+  }
+
   return new Sequelize(
-    process.env.DB_NAME,
-    process.env.DB_USER,
-    process.env.DB_PASS,
+    String(database),
+    String(username),
+    rawPassword,
     {
       host: process.env.DB_HOST || "localhost",
       port: Number(process.env.DB_PORT || 5432),
@@ -51,6 +69,12 @@ const main = async () => {
   if (!name || !email || !password) {
     console.error("Erro: informe --name, --email e --password.");
     showHelp();
+    process.exitCode = 1;
+    return;
+  }
+
+  if (!isValidEmail(email)) {
+    console.error("Erro: --email deve estar em um formato válido (ex: nome@dominio.com).");
     process.exitCode = 1;
     return;
   }

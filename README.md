@@ -174,10 +174,31 @@ npm run create:user -- --name="Administrador" --email="admin@empresa.com" --pass
 Parâmetros:
 
 - `--name` (obrigatório)
-- `--email` (obrigatório)
+- `--email` (obrigatório, em formato válido, ex: `admin@empresa.com`)
 - `--password` (obrigatório)
 - `--companyId` (opcional, padrão: `1`)
 - `--profile` (opcional, padrão: `admin`)
+
+Pré-requisitos de conexão com banco (arquivo `.env` do backend):
+
+- `DB_NAME` e `DB_USER` devem estar definidos.
+- Defina `DB_PASS` (ou `DB_PASSWORD`) como texto.
+- Se aparecer o erro `client password must be a string`, normalmente é `DB_PASS`/`DB_PASSWORD` ausente ou mal formatado.
+
+Exemplo de `.env` mínimo para o comando `create:user`:
+
+```env
+DB_DIALECT=postgres
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=multizap
+DB_USER=postgres
+DB_PASS=123456
+# opcional: pode usar no lugar de DB_PASS
+# DB_PASSWORD=123456
+```
+
+> Dica: mantenha apenas uma das variáveis de senha (`DB_PASS` ou `DB_PASSWORD`) para evitar confusão.
 
 Ajuda rápida:
 
