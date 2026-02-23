@@ -46,3 +46,8 @@ docker compose down -v
 Os arquivos legados de instalação com PM2 foram removidos do repositório para reduzir complexidade operacional.
 
 Use apenas o fluxo com Docker Compose descrito neste documento e no README da raiz.
+
+## Observação sobre dependências do frontend
+
+O frontend possui um arquivo `Multizap/frontend/.npmrc` com `legacy-peer-deps=true` para evitar falhas de resolução de _peer dependencies_ durante o `npm ci` no build Docker.
+
