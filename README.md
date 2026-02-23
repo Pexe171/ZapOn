@@ -179,6 +179,12 @@ Parâmetros:
 - `--companyId` (opcional, padrão: `1`)
 - `--profile` (opcional, padrão: `admin`)
 
+Pré-requisitos de conexão com banco (arquivo `.env` do backend):
+
+- `DB_NAME` e `DB_USER` devem estar definidos.
+- Defina `DB_PASS` (ou `DB_PASSWORD`) como texto.
+- Se aparecer o erro `client password must be a string`, normalmente é `DB_PASS`/`DB_PASSWORD` ausente ou mal formatado.
+
 Ajuda rápida:
 
 ```bash
