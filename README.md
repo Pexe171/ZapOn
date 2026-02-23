@@ -18,6 +18,20 @@ Este repositório foi organizado para rodar o projeto **ZapOn (Multizap)** com *
 
 O backend depende do pacote `baileys`, que exige **Node.js 20+** em tempo de instalação. Por isso, o `Multizap/backend/Dockerfile` usa a imagem `node:20-bookworm-slim`.
 
+## Arquivo de ambiente (.env)
+
+Foi adicionado um arquivo de exemplo na raiz do projeto:
+
+- `.env.example`
+
+Para usar:
+
+```bash
+cp .env.example .env
+```
+
+Depois, ajuste os valores sensíveis e URLs antes de subir o ambiente.
+
 ## Subindo o ambiente
 
 Na raiz do projeto, execute:
@@ -69,7 +83,13 @@ cd zapon
 
 ### 4) Ajustar variáveis de produção
 
-Edite o `docker-compose.yml` antes de subir:
+Crie e edite o `.env` (baseado no `.env.example`) antes de subir:
+
+```bash
+cp .env.example .env
+```
+
+Ajuste principalmente:
 
 - Troque senhas/segredos (`DB_PASS`, `JWT_SECRET`, `JWT_REFRESH_SECRET`).
 - Ajuste `FRONTEND_URL` e `BACKEND_URL` para o domínio final.

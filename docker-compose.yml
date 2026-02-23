@@ -3,15 +3,15 @@ services:
     image: postgres:15-alpine
     container_name: zapon-db
     environment:
-      POSTGRES_DB: zapon
-      POSTGRES_USER: zapon
-      POSTGRES_PASSWORD: zapon
+      POSTGRES_DB: ${POSTGRES_DB:-zapon}
+      POSTGRES_USER: ${POSTGRES_USER:-zapon}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-zapon}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U zapon -d zapon"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-zapon} -d ${POSTGRES_DB:-zapon}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -20,7 +20,7 @@ services:
     image: redis:7-alpine
     container_name: zapon-redis
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT:-6379}:6379"
     volumes:
       - redis_data:/data
 
@@ -34,30 +34,30 @@ services:
       redis:
         condition: service_started
     environment:
-      NODE_ENV: production
-      TZ: America/Sao_Paulo
-      PORT: 8080
+      NODE_ENV: ${NODE_ENV:-production}
+      TZ: ${TZ:-America/Sao_Paulo}
+      PORT: ${BACKEND_PORT:-8080}
       HOST: 0.0.0.0
-      DB_DIALECT: postgres
-      DB_HOST: db
-      DB_PORT: 5432
-      DB_NAME: zapon
-      DB_USER: zapon
-      DB_PASS: zapon
-      DB_POOL_MAX: 20
-      DB_POOL_MIN: 1
-      DB_POOL_ACQUIRE: 30000
-      DB_POOL_IDLE: 10000
-      JWT_SECRET: zapon_jwt_secret
-      JWT_REFRESH_SECRET: zapon_refresh_secret
-      REDIS_URI: redis://redis:6379
-      REDIS_URI_ACK: redis://redis:6379
-      FRONTEND_URL: http://localhost:3000
-      BACKEND_URL: http://localhost:8080
-      PROXY_PORT: 443
-      CHROME_BIN: /usr/bin/chromium
+      DB_DIALECT: ${DB_DIALECT:-postgres}
+      DB_HOST: ${DB_HOST:-db}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-zapon}
+      DB_USER: ${DB_USER:-zapon}
+      DB_PASS: ${DB_PASS:-zapon}
+      DB_POOL_MAX: ${DB_POOL_MAX:-20}
+      DB_POOL_MIN: ${DB_POOL_MIN:-1}
+      DB_POOL_ACQUIRE: ${DB_POOL_ACQUIRE:-30000}
+      DB_POOL_IDLE: ${DB_POOL_IDLE:-10000}
+      JWT_SECRET: ${JWT_SECRET:-zapon_jwt_secret}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-zapon_refresh_secret}
+      REDIS_URI: ${REDIS_URI:-redis://redis:6379}
+      REDIS_URI_ACK: ${REDIS_URI_ACK:-redis://redis:6379}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      BACKEND_URL: ${BACKEND_URL:-http://localhost:8080}
+      PROXY_PORT: ${PROXY_PORT:-443}
+      CHROME_BIN: ${CHROME_BIN:-/usr/bin/chromium}
     ports:
-      - "8080:8080"
+      - "${BACKEND_PORT:-8080}:8080"
     volumes:
       - ./Multizap/backend/public:/app/public
 
@@ -65,13 +65,13 @@ services:
     build:
       context: ./Multizap/frontend
       args:
-        REACT_APP_BACKEND_URL: http://localhost:8080
+        REACT_APP_BACKEND_URL: ${REACT_APP_BACKEND_URL:-http://localhost:8080}
     container_name: zapon-frontend
     depends_on:
       backend:
         condition: service_started
     ports:
-      - "3000:80"
+      - "${FRONTEND_PORT:-3000}:80"
 
 volumes:
   postgres_data:
