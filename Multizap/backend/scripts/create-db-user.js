@@ -21,10 +21,26 @@ const showHelp = () => {
 
 const buildSequelize = () => {
   const dialect = process.env.DB_DIALECT || "postgres";
+  const database = process.env.DB_NAME;
+  const username = process.env.DB_USER;
+  const rawPassword = process.env.DB_PASS ?? process.env.DB_PASSWORD;
+
+  if (!database || !username) {
+    throw new Error(
+      "Configuração de banco inválida: defina DB_NAME e DB_USER no arquivo .env."
+    );
+  }
+
+  if (typeof rawPassword !== "string") {
+    throw new Error(
+      "Configuração de banco inválida: defina DB_PASS (ou DB_PASSWORD) como texto no arquivo .env."
+    );
+  }
+
   return new Sequelize(
-    process.env.DB_NAME,
-    process.env.DB_USER,
-    process.env.DB_PASS,
+    String(database),
+    String(username),
+    rawPassword,
     {
       host: process.env.DB_HOST || "localhost",
       port: Number(process.env.DB_PORT || 5432),
