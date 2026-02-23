@@ -16,7 +16,8 @@
     "pretest": "NODE_ENV=test npx sequelize-cli db:migrate && NODE_ENV=test npx sequelize-cli db:seed:all",
     "test": "NODE_ENV=test jest",
     "posttest": "NODE_ENV=test npx sequelize-cli db:migrate:undo:all",
-    "lint": "eslint src/**/*.ts"
+    "lint": "eslint src/**/*.ts",
+    "create:user": "node scripts/create-db-user.js"
   },
   "author": "",
   "license": "MIT",

@@ -161,3 +161,26 @@ O fluxo oficial agora é **somente Docker Compose**.
 ## Observação sobre dependências do frontend
 
 O frontend possui um arquivo `Multizap/frontend/.npmrc` com `legacy-peer-deps=true` e o `Multizap/frontend/Dockerfile` também executa `npm ci --legacy-peer-deps` para evitar falhas de resolução de _peer dependencies_ durante o build Docker em ambientes diferentes (local/CI).
+
+## Criar usuário direto no banco (CLI)
+
+Quando você precisar criar rapidamente um usuário (email/senha) direto no banco de dados, use o comando abaixo no backend:
+
+```bash
+cd Multizap/backend
+npm run create:user -- --name="Administrador" --email="admin@empresa.com" --password="123456" --companyId=1 --profile=admin
+```
+
+Parâmetros:
+
+- `--name` (obrigatório)
+- `--email` (obrigatório)
+- `--password` (obrigatório)
+- `--companyId` (opcional, padrão: `1`)
+- `--profile` (opcional, padrão: `admin`)
+
+Ajuda rápida:
+
+```bash
+npm run create:user -- --help
+```

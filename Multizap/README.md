@@ -56,3 +56,26 @@ O frontend possui um arquivo `Multizap/frontend/.npmrc` com `legacy-peer-deps=tr
 ## Compatibilidade de Node.js
 
 O backend utiliza a dependência `baileys`, que exige **Node.js 20+** durante o `npm ci`. Por isso, a imagem base do backend no Dockerfile foi definida como `node:20-bookworm-slim`.
+
+## Criar usuário direto no banco (CLI)
+
+Para criar um usuário com email e senha diretamente no banco de dados:
+
+```bash
+cd Multizap/backend
+npm run create:user -- --name="Administrador" --email="admin@empresa.com" --password="123456" --companyId=1 --profile=admin
+```
+
+Parâmetros:
+
+- `--name` (obrigatório)
+- `--email` (obrigatório)
+- `--password` (obrigatório)
+- `--companyId` (opcional, padrão: `1`)
+- `--profile` (opcional, padrão: `admin`)
+
+Ajuda:
+
+```bash
+npm run create:user -- --help
+```
