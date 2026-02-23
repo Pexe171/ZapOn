@@ -1,66 +1,48 @@
-MÉTODO PARA ATUALIZAÇÃO
+# Multizap - Execução com Docker
 
-ATENÇÃO FAZER BACKUP ANTES DE QUALQUER ALTERAÇÃO
+A partir desta versão, a forma recomendada de execução é via **Docker Compose**.
 
-Extraia o arquivo Multizap.zip e utiliza as pastas backend e frontend para o tutorial.
+## Subir ambiente completo
 
-------------------------------------------------------------------------------------------------------
-NO SEU SISTEMA (PELO TERMINAL SSH)
+Na raiz do repositório (`/workspace/ZapOn`):
 
-REMOVER AS PASTAT DO BACKEND( MENOS A PUBLIC E .ENV)
+```bash
+docker compose up -d --build
+```
 
-cd /home/deploy/empresa01/backend
-rm -rf /home/deploy/empresa01/backend/certs
-rm -rf /home/deploy/empresa01/backend/dist
-rm -rf /home/deploy/empresa01/backend/node_modules
-rm -rf /home/deploy/empresa01/backend/src
+## Tutorial rápido de produção (Ubuntu via SSH)
 
------------------------------------
+```bash
+ssh usuario@IP_DO_SERVIDOR
+git clone <URL_DO_REPOSITORIO> zapon
+cd zapon
+sudo docker compose up -d --build
+sudo docker compose logs -f backend
+```
 
-APÓS EXCLUIR AS PASTAS INDICADAS, ARRASTE AS PASTAS DO NOVO SISTEMA(MENOS A PUBLIC)
+> Antes de subir em produção, ajuste segredos e URLs no `docker-compose.yml`.
 
+## Endereços
 
-----------------------------------------------------------------
+- Frontend: `http://localhost:3000`
+- Backend: `http://localhost:8080`
 
-APÓS FEITO O UPLOAD DAS PASTAS DÊ OS COMANDOS:
+## Parar ambiente
 
-npm i && npm run build
+```bash
+docker compose down
+```
 
-npm run db:migrate
----------------------------------------------------------
+## Dica
 
-AGORA DELETAR AS PASTAS DO FRONTEND( MENOS A PUBLIC)
-Faça backup da sua pasta ASSETS do SRC, ou já substitua no arquivo novo antes de fazer o upload.
-Pode trocar o INDEX da PUBLIC do FRONTEND.
+Se quiser limpar banco/redis para recomeçar do zero:
 
-cd /home/deploy/empresa01/frontend
-rm -rf /home/deploy/empresa01/frontend/src
-rm -rf /home/deploy/empresa01/frontend/node_modules
-rm -rf /home/deploy/empresa01/frontend/build
--------------------------------------------------------------
+```bash
+docker compose down -v
+```
 
-APÓS EXCLUIR AS PASTAS INDICADAS, ARRASTE AS PASTAS DO NOVO SISTEMA(MENOS A PUBLIC e .env)
+## Limpeza realizada
 
-------------------------------------------------------------
-APÓS FEITO O UPLOAD DAS PASTAS DÊ OS COMANDOS:
+Os arquivos legados de instalação com PM2 foram removidos do repositório para reduzir complexidade operacional.
 
-npm i --f && npm run build
-
-
-TERMINANDO, ABRA SEU SISTEMA E DÊ UM CONTROL SHIFT R
-
-Pronto....
-
---------------------------------------------------------------
-
-SE PRECISAR INICIAR O PM2 UTILIZE O ECOSSYSTEM.JS
-
-sudo su deploy
-
-cd /home/deploy/empresa01
-
-pm2 delete empresa01-backend empresa01-frontend
-
-pm2 start ecosystem.config.js
-
-pm2 save
+Use apenas o fluxo com Docker Compose descrito neste documento e no README da raiz.

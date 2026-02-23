@@ -1,0 +1,78 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: zapon-db
+    environment:
+      POSTGRES_DB: zapon
+      POSTGRES_USER: zapon
+      POSTGRES_PASSWORD: zapon
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U zapon -d zapon"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: zapon-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  backend:
+    build:
+      context: ./Multizap/backend
+    container_name: zapon-backend
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      NODE_ENV: production
+      TZ: America/Sao_Paulo
+      PORT: 8080
+      HOST: 0.0.0.0
+      DB_DIALECT: postgres
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: zapon
+      DB_USER: zapon
+      DB_PASS: zapon
+      DB_POOL_MAX: 20
+      DB_POOL_MIN: 1
+      DB_POOL_ACQUIRE: 30000
+      DB_POOL_IDLE: 10000
+      JWT_SECRET: zapon_jwt_secret
+      JWT_REFRESH_SECRET: zapon_refresh_secret
+      REDIS_URI: redis://redis:6379
+      REDIS_URI_ACK: redis://redis:6379
+      FRONTEND_URL: http://localhost:3000
+      BACKEND_URL: http://localhost:8080
+      PROXY_PORT: 443
+      CHROME_BIN: /usr/bin/chromium
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./Multizap/backend/public:/app/public
+
+  frontend:
+    build:
+      context: ./Multizap/frontend
+      args:
+        REACT_APP_BACKEND_URL: http://localhost:8080
+    container_name: zapon-frontend
+    depends_on:
+      backend:
+        condition: service_started
+    ports:
+      - "3000:80"
+
+volumes:
+  postgres_data:
+  redis_data:
