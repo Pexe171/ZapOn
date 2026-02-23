@@ -152,3 +152,8 @@ O modo antigo baseado em cópia manual de pastas + PM2 foi substituído por uma 
 Para simplificar manutenção, foram removidos os artefatos antigos de instalação manual (scripts `instalar_*`, pastas `lib/`, `utils/`, `variables/`, arquivo `config` e `ecosystem.config.js`).
 
 O fluxo oficial agora é **somente Docker Compose**.
+
+## Observação sobre dependências do frontend
+
+O frontend possui um arquivo `Multizap/frontend/.npmrc` com `legacy-peer-deps=true` para evitar falhas de resolução de _peer dependencies_ durante o `npm ci` no build Docker.
+
