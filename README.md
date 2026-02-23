@@ -146,6 +146,7 @@ docker compose down -v
    - usar HTTPS com proxy reverso (Nginx/Traefik/Caddy);
    - configurar backup de volume do Postgres;
    - restringir acesso externo direto às portas de banco/redis.
+5. O backend agora mantém `@types/multer` em dependências de produção para permitir o `npm run build` dentro do Docker mesmo com `npm ci --omit=dev`.
 
 ## Migração do modo antigo para Docker
 
@@ -160,4 +161,3 @@ O fluxo oficial agora é **somente Docker Compose**.
 ## Observação sobre dependências do frontend
 
 O frontend possui um arquivo `Multizap/frontend/.npmrc` com `legacy-peer-deps=true` e o `Multizap/frontend/Dockerfile` também executa `npm ci --legacy-peer-deps` para evitar falhas de resolução de _peer dependencies_ durante o build Docker em ambientes diferentes (local/CI).
-
