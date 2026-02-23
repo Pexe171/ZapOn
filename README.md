@@ -1,77 +1,154 @@
-<<<<<<< HEAD
-Multizap Flow 4.4.0
+# ZapOn com Docker
 
-https://portaldozap.com.br
+Este repositório foi organizado para rodar o projeto **ZapOn (Multizap)** com **Docker Compose**, reduzindo a dependência de instalação manual no servidor.
 
-https://www.youtube.com/@siteconnect
+## O que foi preparado
 
+- Container do **PostgreSQL**.
+- Container do **Redis**.
+- Container do **backend** (Node.js + build TypeScript + migrations automáticas).
+- Container do **frontend** (build React + Nginx).
 
-MÉTODO PARA ATUALIZAÇÃO
+## Pré-requisitos
 
-ATENÇÃO FAZER BACKUP ANTES DE QUALQUER ALTERAÇÃO
+- Docker 24+
+- Docker Compose (plugin `docker compose`)
 
-Extraia o arquivo Multizap.zip e utiliza as pastas backend e frontend para o tutorial.
+## Subindo o ambiente
 
-------------------------------------------------------------------------------------------------------
-NO SEU SISTEMA (PELO TERMINAL SSH)
+Na raiz do projeto, execute:
 
-REMOVER AS PASTAT DO BACKEND( MENOS A PUBLIC E .ENV)
+```bash
+docker compose up -d --build
+```
 
-cd /home/deploy/empresa01/backend
-rm -rf /home/deploy/empresa01/backend/certs
-rm -rf /home/deploy/empresa01/backend/dist
-rm -rf /home/deploy/empresa01/backend/node_modules
-rm -rf /home/deploy/empresa01/backend/src
+A aplicação ficará disponível em:
 
------------------------------------
+- Frontend: `http://localhost:3000`
+- Backend: `http://localhost:8080`
+- PostgreSQL: `localhost:5432`
+- Redis: `localhost:6379`
 
-APÓS EXCLUIR AS PASTAS INDICADAS, ARRASTE AS PASTAS DO NOVO SISTEMA(MENOS A PUBLIC)
+## Tutorial de produção via SSH (Ubuntu)
 
+> Fluxo recomendado para quem já está com servidor Ubuntu e acesso SSH.
 
-----------------------------------------------------------------
+### 1) Acessar o servidor
 
-APÓS FEITO O UPLOAD DAS PASTAS DÊ OS COMANDOS:
+```bash
+ssh usuario@IP_DO_SERVIDOR
+```
 
-npm i && npm run build
+### 2) Instalar Docker e plugin Compose
 
-npm run db:migrate
----------------------------------------------------------
+```bash
+sudo apt update
+sudo apt install -y ca-certificates curl gnupg
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+sudo chmod a+r /etc/apt/keyrings/docker.gpg
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt update
+sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+sudo systemctl enable docker
+sudo systemctl start docker
+```
 
-AGORA DELETAR AS PASTAS DO FRONTEND( MENOS A PUBLIC)
-Faça backup da sua pasta ASSETS do SRC, ou já substitua no arquivo novo antes de fazer o upload.
-Pode trocar o INDEX da PUBLIC do FRONTEND.
+### 3) Clonar projeto no servidor
 
-cd /home/deploy/empresa01/frontend
-rm -rf /home/deploy/empresa01/frontend/src
-rm -rf /home/deploy/empresa01/frontend/node_modules
-rm -rf /home/deploy/empresa01/frontend/build
--------------------------------------------------------------
+```bash
+git clone <URL_DO_REPOSITORIO> zapon
+cd zapon
+```
 
-APÓS EXCLUIR AS PASTAS INDICADAS, ARRASTE AS PASTAS DO NOVO SISTEMA(MENOS A PUBLIC e .env)
+### 4) Ajustar variáveis de produção
 
-------------------------------------------------------------
-APÓS FEITO O UPLOAD DAS PASTAS DÊ OS COMANDOS:
+Edite o `docker-compose.yml` antes de subir:
 
-npm i --f && npm run build
+- Troque senhas/segredos (`DB_PASS`, `JWT_SECRET`, `JWT_REFRESH_SECRET`).
+- Ajuste `FRONTEND_URL` e `BACKEND_URL` para o domínio final.
+- Se necessário, ajuste portas publicadas.
 
+### 5) Subir stack em produção
 
-TERMINANDO, ABRA SEU SISTEMA E DÊ UM CONTROL SHIFT R
+```bash
+sudo docker compose up -d --build
+```
 
-Pronto....
+### 6) Conferir se subiu corretamente
 
---------------------------------------------------------------
+```bash
+sudo docker compose ps
+sudo docker compose logs -f backend
+sudo docker compose logs -f frontend
+```
 
-SE PRECISAR INICIAR O PM2 UTILIZE O ECOSSYSTEM.JS
+### 7) Atualizar versão em deploy futuro
 
-sudo su deploy
+```bash
+git pull
+sudo docker compose up -d --build
+```
 
-cd /home/deploy/empresa01
+### 8) Backup básico do banco PostgreSQL
 
-pm2 delete empresa01-backend empresa01-frontend
+```bash
+sudo docker exec -t zapon-db pg_dump -U zapon zapon > backup_zapon.sql
+```
 
-pm2 start ecosystem.config.js
+### 9) Restore básico do banco PostgreSQL
 
-pm2 save
-=======
-# ZapOn
->>>>>>> fc3a231ccdf36de5c1e847248e522008f60b2d01
+```bash
+cat backup_zapon.sql | sudo docker exec -i zapon-db psql -U zapon -d zapon
+```
+
+## Comandos úteis
+
+### Ver logs
+
+```bash
+docker compose logs -f backend
+docker compose logs -f frontend
+```
+
+### Parar ambiente
+
+```bash
+docker compose down
+```
+
+### Parar e remover volumes (zera banco/redis)
+
+```bash
+docker compose down -v
+```
+
+## Estrutura Docker criada
+
+- `docker-compose.yml`
+- `Multizap/backend/Dockerfile`
+- `Multizap/frontend/Dockerfile`
+- `.dockerignore`
+
+## Observações importantes
+
+1. O backend roda `npm run db:migrate` ao iniciar o container.
+2. O frontend usa `REACT_APP_BACKEND_URL=http://localhost:8080` no build do container.
+3. Caso precise personalizar segredos e URLs, ajuste as variáveis no serviço `backend` dentro do `docker-compose.yml`.
+4. Para produção, recomenda-se:
+   - trocar senhas/sigilos (`JWT_SECRET`, `DB_PASS`, etc.);
+   - usar HTTPS com proxy reverso (Nginx/Traefik/Caddy);
+   - configurar backup de volume do Postgres;
+   - restringir acesso externo direto às portas de banco/redis.
+
+## Migração do modo antigo para Docker
+
+O modo antigo baseado em cópia manual de pastas + PM2 foi substituído por uma esteira mais previsível via containers. Isso reduz erro operacional, facilita rollback e padroniza o ambiente entre máquinas.
+
+## Limpeza de legado
+
+Para simplificar manutenção, foram removidos os artefatos antigos de instalação manual (scripts `instalar_*`, pastas `lib/`, `utils/`, `variables/`, arquivo `config` e `ecosystem.config.js`).
+
+O fluxo oficial agora é **somente Docker Compose**.
