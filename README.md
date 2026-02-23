@@ -189,6 +189,8 @@ Quando você precisar criar rapidamente um usuário (email/senha) direto no banc
 ```bash
 cd Multizap/backend
 npm run create:user -- --name="Administrador" --email="admin@empresa.com" --password="123456" --companyId=1 --profile=admin
+# alias equivalente:
+npm run create-user -- --name="Administrador" --email="admin@empresa.com" --password="123456" --companyId=1 --profile=admin
 ```
 
 Parâmetros:
@@ -209,4 +211,10 @@ Ajuda rápida:
 
 ```bash
 npm run create:user -- --help
+```
+
+Se estiver executando via Docker e aparecer `Missing script: "create:user"`, recrie o container do backend para carregar a versão mais recente do `package.json`:
+
+```bash
+docker compose up -d --build backend
 ```
