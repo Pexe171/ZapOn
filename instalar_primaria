@@ -1,0 +1,234 @@
+#!/bin/bash
+
+# reset shell colors
+tput init
+
+# https://stackoverflow.com/questions/59895/how-to-get-the-source-directory-of-a-bash-script-from-within-the-script-itself
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ];
+do # resolve $SOURCE until the file is no longer a symlink
+  PROJECT_ROOT="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$PROJECT_ROOT/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+done
+PROJECT_ROOT="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
+
+# required imports
+source "${PROJECT_ROOT}"/variables/manifest.sh
+source "${PROJECT_ROOT}"/utils/manifest.sh
+source "${PROJECT_ROOT}"/lib/manifest.sh
+
+# user configs file
+if [[ !
+-e "${PROJECT_ROOT}"/config ]]; then
+  cat << EOF > "${PROJECT_ROOT}"/config
+deploy_password=${deploy_password}
+mysql_root_password=${mysql_root_password}
+db_pass=${db_pass}
+EOF
+fi
+
+# this file has passwords
+sudo su - root <<EOF
+chown root:root "${PROJECT_ROOT}"/config
+chmod 700 "${PROJECT_ROOT}"/config
+EOF
+source "${PROJECT_ROOT}"/config
+
+# interactive CLI
+inquiry_options
+
+# Generate JWT secrets if not already set
+if [ -z "$jwt_secret" ] ||
+[ -z "$jwt_refresh_secret" ]; then
+  print_banner
+  printf "${WHITE} 💻 Gerando segredos JWT...${GRAY_LIGHT}"
+  printf "\n\n"
+  
+  jwt_secret=$(openssl rand -base64 64 | tr -d '\n')
+  jwt_refresh_secret=$(openssl rand -base64 64 | tr -d '\n')
+  
+  # Save to config file
+  echo "jwt_secret=${jwt_secret}" >> "${PROJECT_ROOT}"/config
+  echo "jwt_refresh_secret=${jwt_refresh_secret}" >> "${PROJECT_ROOT}"/config
+  
+  printf "${GREEN}   ✅ Segredos JWT gerados automaticamente${GRAY_LIGHT}\n"
+  sleep 2
+fi
+
+# Configurações automáticas do Redis
+# *** CORRIGIDO AQUI ***
+# Garante que o redis_host seja o '127.0.0.1' definido no inquiry.sh
+# Se get_urls (no inquiry) já definiu, usamos ele. Se não, definimos aqui.
+: ${redis_host:="127.0.0.1"}
+: ${redis_password:="${mysql_root_password}"}
+
+
+# Esta seção foi removida pois já é exibida pelo _inquiry.sh
+# printf "\n${GREEN}   ✅ Redis configurado automaticamente:${GRAY_LIGHT}"
+# printf "\n${GREEN}      Host: ${redis_host} | Senha: mesma do banco${GRAY_LIGHT}\n"
+# sleep 2
+
+print_banner
+printf "${WHITE} 🚀 Iniciando instalação completa 
+do Multizap...${GRAY_LIGHT}"
+printf "\n\n"
+printf "${WHITE} 📝 Configurações:${GRAY_LIGHT}"
+printf "\n"
+printf "${WHITE}    🏢 Instância: ${instancia_add}${GRAY_LIGHT}"
+printf "\n"
+printf "${WHITE}    🌐 Frontend: ${frontend_url}:${frontend_port}${GRAY_LIGHT}"
+printf "\n"
+printf "${WHITE}    🔧 Backend: ${backend_url}:${backend_port}${GRAY_LIGHT}"
+printf "\n"
+printf "${WHITE}    🗄️  Redis: ${redis_host}:${redis_port} (Automático)${GRAY_LIGHT}"
+printf "\n"
+printf "${WHITE}    👥 Usuários: ${max_user} |
+Conexões: ${max_whats}${GRAY_LIGHT}"
+printf "\n\n"
+
+sleep 3
+
+# dependencies related
+printf "${WHITE} 📦 Instalando dependências do sistema...${GRAY_LIGHT}\n"
+system_update
+system_node_install
+system_docker_install
+system_puppeteer_dependencies
+system_pm2_install
+system_snapd_install
+system_nginx_install
+system_certbot_install
+
+# system config
+printf "${WHITE} 🔧 Configurando sistema...${GRAY_LIGHT}\n"
+system_create_user
+
+# backend related
+printf "${WHITE} 🛠️  Configurando backend...${GRAY_LIGHT}\n"
+system_create_folder
+system_mv_folder
+system_unzip_Multizap
+backend_set_env
+backend_redis_create
+backend_node_dependencies
+backend_node_build
+backend_db_migrate
+backend_db_seed
+backend_start_pm2
+backend_nginx_setup
+
+# frontend related
+printf "${WHITE} 🎨 Configurando frontend...${GRAY_LIGHT}\n"
+frontend_set_env
+frontend_node_dependencies
+frontend_node_build
+frontend_start_pm2
+frontend_nginx_setup
+
+# network related
+printf "${WHITE} 🌐 Configurando rede...${GRAY_LIGHT}\n"
+system_nginx_conf
+system_nginx_restart
+system_certbot_setup
+
+# Final setup and verification
+print_banner
+printf "${WHITE} 🔍 Verificando serviços...${GRAY_LIGHT}"
+printf "\n\n"
+
+sleep 2
+
+# Verify services
+printf "${WHITE} 🔄 Verificando PM2...${GRAY_LIGHT}\n"
+sudo su - deploy <<EOF
+echo "📊 Listando processos PM2..."
+pm2 list
+
+echo "🔍 Verificando backend..."
+sleep 5
+if curl -f http://localhost:${backend_port}/ >/dev/null 2>&1;
+then
+  echo "✅ Backend respondendo na porta ${backend_port}"
+else
+  echo "⚠️  Backend não respondeu imediatamente, aguardando..."
+  sleep 10
+  curl -f http://localhost:${backend_port}/ && echo "✅ Backend respondendo" ||
+echo "❌ Backend não responde"
+fi
+
+echo "🔍 Verificando frontend..."
+if curl -f http://localhost:${frontend_port}/ >/dev/null 2>&1;
+then
+  echo "✅ Frontend respondendo na porta ${frontend_port}"
+else
+  echo "⚠️  Frontend não respondeu imediatamente"
+fi
+EOF
+
+# Verify Redis
+printf "${WHITE} 🔄 Verificando Redis...${GRAY_LIGHT}\n"
+sudo su - root <<EOF
+echo "🐳 Verificando container Redis..."
+if docker ps |
+grep -q "redis-${instancia_add}"; then
+  echo "✅ Container Redis está rodando"
+else
+  echo "❌ Container Redis não está rodando"
+  exit 1
+fi
+
+echo "🔗 Testando conexão com Redis..."
+if docker exec redis-${instancia_add} redis-cli -a ${redis_password} ping |
+grep -q "PONG"; then
+  echo "✅ Conexão Redis OK"
+  echo "📊 Configuração Redis:"
+  echo "   🏠 Host: ${redis_host}" # *** CORRIGIDO AQUI ***
+  echo "   🔑 Senha: mesma do banco"
+  echo "   📍 Porta: ${redis_port}"
+else
+  echo "❌ Falha na conexão Redis"
+  exit 1
+fi
+EOF
+
+sleep 2
+
+print_banner
+printf "${GREEN} ✅ Instalação do Multizap concluída com sucesso!${GRAY_LIGHT}"
+printf "\n\n"
+printf "${WHITE} 📊 Resumo da instalação:${GRAY_LIGHT}"
+printf "\n"
+printf "${WHITE}    🏢 Instância: ${instancia_add}${GRAY_LIGHT}"
+printf "\n"
+printf "${WHITE}    🌐 Frontend: ${frontend_url}${GRAY_LIGHT}"
+printf "\n"
+printf "${WHITE}    🔧 Backend: ${backend_url}${GRAY_LIGHT}"
+printf "\n"
+printf "${WHITE}    🗄️  Redis: ${redis_host}:${redis_port} (Automático)${GRAY_LIGHT}"
+printf 
+"\n"
+printf "${WHITE}    👥 Limite de usuários: ${max_user}${GRAY_LIGHT}"
+printf "\n"
+printf "${WHITE}    📞 Limite de conexões: ${max_whats}${GRAY_LIGHT}"
+printf "\n\n"
+printf "${WHITE} 🔧 Comandos úteis:${GRAY_LIGHT}"
+printf "\n"
+printf "${WHITE}    Ver logs: pm2 logs ${instancia_add}-backend${GRAY_LIGHT}"
+printf "\n"
+printf "${WHITE}    Reiniciar: pm2 restart ${instancia_add}-backend${GRAY_LIGHT}"
+printf "\n"
+printf "${WHITE}    Status: pm2 status${GRAY_LIGHT}"
+printf "\n"
+printf "${WHITE}    Redis: docker logs redis-${instancia_add}${GRAY_LIGHT}"
+printf "\n\n"
+printf "${WHITE} 🎯 Próximos passos:${GRAY_LIGHT}"
+printf "\n"
+printf "${WHITE}    1. Acesse ${frontend_url}${GRAY_LIGHT}"
+printf "\n"
+printf "${WHITE}    2. Configure o WhatsApp no painel${GRAY_LIGHT}"
+printf "\n"
+printf "${WHITE}    3. Teste o agendamento de mensagens (Redis)${GRAY_LIGHT}"
+printf "\n\n"
+
+sleep 3
